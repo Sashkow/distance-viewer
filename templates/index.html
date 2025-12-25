@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Balance Graph Viewer</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Social Balance Graph Viewer</h1>
+            <p>Interactive visualization of structural balance theory simulation</p>
+            <div class="model-info">
+                <strong>Current Model:</strong>
+                <span class="model-badge">{{ model_info.balance_rule }}</span> |
+                <span class="model-badge">{{ model_info.action_strategy }}</span> |
+                <span class="model-badge">{{ model_info.relationship_type }}</span> |
+                <span class="model-badge">{{ model_info.decay }}</span>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="sidebar">
+                <div class="panel">
+                    <h2>Initialize Graph</h2>
+                    <form id="init-form">
+                        <label>
+                            Number of People:
+                            <input type="number" id="num-people" value="15" min="3" max="50">
+                        </label>
+                        <label>
+                            Positive Probability:
+                            <input type="number" id="positive-prob" value="0.3" min="0" max="1" step="any">
+                        </label>
+                        <label>
+                            Negative Probability:
+                            <input type="number" id="negative-prob" value="0.3" min="0" max="1" step="any">
+                        </label>
+                        <label>
+                            Neutral Probability:
+                            <input type="number" id="neutral-prob" value="0.4" min="0" max="1" step="any">
+                        </label>
+                        <div id="prob-sum-warning" class="warning-message" style="display: none;">
+                            ⚠️ Probabilities must sum to 1.0
+                        </div>
+                        <button type="submit">Initialize</button>
+                    </form>
+                </div>
+
+                <div class="panel">
+                    <h2>Simulation</h2>
+                    <label>
+                        Action Probability:
+                        <input type="number" id="action-prob" value="0.5" min="0" max="1" step="any">
+                    </label>
+                    <label>
+                        Max Iterations:
+                        <input type="number" id="max-iterations" value="100" min="1" max="1000">
+                    </label>
+                    <div class="button-group">
+                        <button id="step-btn">Step Once</button>
+                        <button id="run-btn">Run Simulation</button>
+                        <button id="stop-btn" class="danger" style="display: none;">Stop Simulation</button>
+                        <button id="reset-btn" class="danger">Reset</button>
+                    </div>
+                    <div id="progress-bar" style="display: none;">
+                        <div class="progress-container">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <div class="progress-text" id="progress-text">Iteration 0 / 0</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Statistics</h2>
+                    <div id="stats">
+                        <p>No graph loaded</p>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Layout</h2>
+                    <div class="layout-toggle" style="margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="use-mds-layout" style="margin-right: 10px;">
+                            <span>Use MDS Layout (dimension reduction)</span>
+                        </label>
+                        <p style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                            MDS computes optimal node positions based on edge distances
+                        </p>
+                    </div>
+                    <div id="pca-info" style="display: none; margin-bottom: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 0.85em;">
+                        <strong>Dimension Reduction Quality:</strong>
+                        <div id="pca-variance" style="margin-top: 5px;"></div>
+                    </div>
+                    <div id="compromise-info" style="display: none; margin-bottom: 20px; padding: 10px; background: #e8f4f8; border-radius: 5px; font-size: 0.85em;">
+                        <strong>Simulation Compromise:</strong>
+                        <div id="compromise-stats" style="margin-top: 5px;"></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Legend</h2>
+                    <h3 style="font-size: 0.9em; margin-bottom: 10px; color: #555;">Edges</h3>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="edge positive"></div>
+                            <span>Positive Relationship</span>
+                            <button class="toggle-btn" id="toggle-positive" data-active="true">Hide</button>
+                        </div>
+                        <div class="legend-item">
+                            <div class="edge negative"></div>
+                            <span>Negative Relationship</span>
+                            <button class="toggle-btn" id="toggle-negative" data-active="true">Hide</button>
+                        </div>
+                    </div>
+                    <h3 style="font-size: 0.9em; margin: 15px 0 10px 0; color: #555;">Nodes</h3>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="node-color unbalanced"></div>
+                            <span>In At Least One Unbalanced Triangle</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="node-color balanced"></div>
+                            <span>In All Balanced Triangles</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="node-color none"></div>
+                            <span>Not in Any Triangle</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-panel">
+                <div id="graph-container">
+                    <svg id="graph"></svg>
+                </div>
+                <div id="status-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+
+    <footer class="page-footer">
+        <img src="/static/curious_ari_transparent.png" alt="Curious Ari" class="footer-mascot">
+    </footer>
+</body>
+</html>

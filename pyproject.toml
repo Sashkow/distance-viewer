@@ -1,0 +1,14 @@
+[project]
+name = "distance-viewer"
+version = "0.1.0"
+description = "Interactive web application for visualizing and simulating social balance theory in graphs using Neo4j"
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "neo4j>=5.16.0",
+    "python-dotenv>=1.0.0",
+    "numpy>=1.26.3",
+    "jinja2>=3.1.3",
+    "scikit-learn>=1.3.0",
+]
