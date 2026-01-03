@@ -177,7 +177,8 @@ async function loadGraph() {
             document.getElementById('compromise-info').style.display = 'none';
         }
 
-        renderGraph(data, useMDS, data.is_continuous);
+        const isContinuous = data.relationship_type !== 'DiscreteRelationship';
+        renderGraph(data, useMDS, isContinuous);
         await updateStatsFromServer();
     } catch (error) {
         console.error('Error loading graph:', error);
