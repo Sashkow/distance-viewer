@@ -86,6 +86,11 @@ class RelationshipType(ABC):
         """Return the (min, max) range of valid values."""
         pass
 
+    @abstractmethod
+    def is_continuous(self) -> bool:
+        """Return True if this is a continuous (distance-based) relationship type."""
+        pass
+
 
 class DiscreteRelationship(RelationshipType):
     """
@@ -133,6 +138,9 @@ class DiscreteRelationship(RelationshipType):
 
     def get_range(self) -> tuple:
         return (-1.0, 1.0)
+
+    def is_continuous(self) -> bool:
+        return False
 
 
 class ContinuousRelationship(RelationshipType):
@@ -196,6 +204,9 @@ class ContinuousRelationship(RelationshipType):
     def get_range(self) -> tuple:
         return (self.min_val, self.max_val)
 
+    def is_continuous(self) -> bool:
+        return True
+
 
 class BipolarRelationship(RelationshipType):
     """
@@ -256,3 +267,6 @@ class BipolarRelationship(RelationshipType):
 
     def get_range(self) -> tuple:
         return (self.min_val, self.max_val)
+
+    def is_continuous(self) -> bool:
+        return True

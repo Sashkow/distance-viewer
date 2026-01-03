@@ -108,7 +108,8 @@ async def get_graph():
     """Get current graph data for visualization"""
     print(f"[API] Fetching graph data...")
     graph_data = await model.get_graph_data()
-    print(f"[API] Graph data: {len(graph_data['nodes'])} nodes, {len(graph_data['links'])} links")
+    graph_data['is_continuous'] = model.relationship_type.is_continuous()
+    print(f"[API] Graph data: {len(graph_data['nodes'])} nodes, {len(graph_data['links'])} links, continuous={graph_data['is_continuous']}")
     return graph_data
 
 
@@ -117,7 +118,8 @@ async def get_graph_mds():
     """Get graph data with MDS-computed positions and PCA analysis"""
     print(f"[API] Fetching graph data with MDS layout...")
     graph_data = await model.get_graph_data_mds()
-    print(f"[API] MDS graph data: {len(graph_data['nodes'])} nodes, {len(graph_data['links'])} links")
+    graph_data['is_continuous'] = model.relationship_type.is_continuous()
+    print(f"[API] MDS graph data: {len(graph_data['nodes'])} nodes, {len(graph_data['links'])} links, continuous={graph_data['is_continuous']}")
     if graph_data.get('pca_info'):
         print(f"[API] PCA variance: {graph_data['pca_info']['variance_explained'][:2]}, 2D captures {graph_data['pca_info']['total_variance_2d']}%")
     return graph_data

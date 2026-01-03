@@ -177,7 +177,7 @@ async function loadGraph() {
             document.getElementById('compromise-info').style.display = 'none';
         }
 
-        renderGraph(data, useMDS);
+        renderGraph(data, useMDS, data.is_continuous);
         await updateStatsFromServer();
     } catch (error) {
         console.error('Error loading graph:', error);
@@ -250,7 +250,7 @@ function displayCompromiseInfo(compromiseInfo) {
     document.getElementById('compromise-info').style.display = 'block';
 }
 
-function renderGraph(data, useMDS = false) {
+function renderGraph(data, useMDS = false, isContinuous = false) {
     // Compute clusters based on positive relationships
     const clusters = computeClusters(data);
 
@@ -280,8 +280,8 @@ function renderGraph(data, useMDS = false) {
 
     const linkUpdate = linkEnter.merge(link)
         .attr('class', d => {
-            // For continuous edges (with values), don't add type class to avoid CSS override
-            if (d.value !== null && d.value !== undefined) {
+            // For continuous mode, don't add type class to avoid CSS override
+            if (isContinuous) {
                 return 'link';
             }
             // For discrete edges, add type class for CSS coloring
@@ -303,7 +303,7 @@ function renderGraph(data, useMDS = false) {
 
     const linkLabelUpdate = linkLabelEnter.merge(linkLabel)
         .text(d => {
-            if (d.value === null || d.value === undefined) return '';
+            if (!isContinuous || d.value === null || d.value === undefined) return '';
 
             let text = d.value.toFixed(2);
 
@@ -392,7 +392,7 @@ function renderGraph(data, useMDS = false) {
             .attr('y2', d => d.target.fy || d.target.y)
             .attr('stroke', d => {
                 // For continuous values, color by divergence
-                if (d.value !== null && d.value !== undefined) {
+                if (isContinuous && d.value !== null && d.value !== undefined) {
                     const x1 = d.source.fx || d.source.x;
                     const y1 = d.source.fy || d.source.y;
                     const x2 = d.target.fx || d.target.x;
@@ -431,17 +431,13 @@ function renderGraph(data, useMDS = false) {
                 .attr('y2', d => d.target.y)
                 .attr('stroke', d => {
                     // For continuous values, color by divergence
-                    if (d.value !== null && d.value !== undefined) {
+                    if (isContinuous && d.value !== null && d.value !== undefined) {
                         const actualDistance = Math.sqrt(
                             Math.pow(d.target.x - d.source.x, 2) +
                             Math.pow(d.target.y - d.source.y, 2)
                         );
                         const desiredDistance = d.value * DISTANCE_SCALE;
                         const color = getDivergenceColor(actualDistance, desiredDistance);
-                        // Debug: log first edge color calculation
-                        if (Math.random() < 0.01) {
-                            console.log(`Edge color: actual=${actualDistance.toFixed(1)}, desired=${desiredDistance.toFixed(1)}, color=${color}`);
-                        }
                         return color;
                     }
                     // For discrete values, use default colors
@@ -460,8 +456,8 @@ function renderGraph(data, useMDS = false) {
         simulation.force('link')
             .links(data.links)
             .distance(d => {
-                // Use float value as distance if available
-                if (d.value !== null && d.value !== undefined) {
+                // Use float value as distance if in continuous mode
+                if (isContinuous && d.value !== null && d.value !== undefined) {
                     return d.value * DISTANCE_SCALE;
                 }
                 // Default distances for discrete types
@@ -469,7 +465,7 @@ function renderGraph(data, useMDS = false) {
             })
             .strength(d => {
                 // For continuous values, use strong force to achieve target distance
-                if (d.value !== null && d.value !== undefined) {
+                if (isContinuous && d.value !== null && d.value !== undefined) {
                     return 1.5;
                 }
                 // Default strength for discrete types
